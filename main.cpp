@@ -10,12 +10,11 @@
 #include <QProcess>
 #include <QFile>
 #include <QDir>
-//#include "cs_client.h"
 #include "user_login_dlg.h"
 #include "bridge.h"
 
 #include "common.h"
-#define VERSION "软件版本2.20"
+#define VERSION "软件版本3.0"
 
 QString exe_path = "";
 QString config_path = "";

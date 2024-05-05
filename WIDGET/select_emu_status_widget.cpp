@@ -2,7 +2,6 @@
 #include "ui_select_emu_status_widget.h"
 
 
-
 select_emu_status_widget::select_emu_status_widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::select_emu_status_widget)
@@ -15,9 +14,9 @@ select_emu_status_widget::select_emu_status_widget(QWidget *parent) :
     ui->date_edt->setNullDatetime();
     ui->date_edt->setDateTime(QDateTime::currentDateTime());
 
-    ui->tableWidget->setColumnCount(6);
+    ui->tableWidget->setColumnCount(7);
     ui->tableWidget->setHorizontalHeaderLabels(
-                QStringList() << "网关" << "网关状态" << "运行模式" << "信号强度" << "功能码" << "更新时间");
+                    QStringList() << "网关" << "网关状态" << "运行模式" << "信号强度" << "功能码" << "网关版本"<< "更新时间");
 
     //设置最后一栏自适应长度
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
@@ -54,7 +53,7 @@ void select_emu_status_widget::on_select_pb_clicked()
     body_obj.insert("start_num",QString::number(ui->flipover_wd->get_page_index()));
     body_obj.insert("emu_cid",ui->emu_cid_edt->text());
 
-    emit s_select_emu_status(5000,"/r_emu_status",body_obj);
+    emit s_select_emu_status(120000,"/r_emu_status",body_obj);
 }
 
 void select_emu_status_widget::onm_display_emu_status(QJsonObject data)
@@ -90,9 +89,12 @@ void select_emu_status_widget::onm_display_emu_status(QJsonObject data)
             ui->tableWidget->setItem(i,3,new QTableWidgetItem("数据异常"));
         }
         ui->tableWidget->setItem(i,4,new QTableWidgetItem(datas_array[i].toObject().value("func").toString()));
-        ui->tableWidget->setItem(i,5,new QTableWidgetItem(datas_array[i].toObject().value("sys_time").toString()));
+        //网关版本
+        ui->tableWidget->setItem(i,5,new QTableWidgetItem(datas_array[i].toObject().value("hard_version").toString()));
 
-        for(int j=0;j<6;j++)
+        ui->tableWidget->setItem(i,6,new QTableWidgetItem(datas_array[i].toObject().value("sys_time").toString()));
+
+        for(int j=0;j<7;j++)
         {
             //设置每项居中
             ui->tableWidget->item(i,j)->setTextAlignment(Qt::AlignCenter);

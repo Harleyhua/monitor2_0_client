@@ -57,7 +57,7 @@ void select_emu_action_widget::on_select_pb_clicked()
 
     body_obj.insert("params",body_obj);
 
-    emit s_select_emu_data(5000,"/r_emu_action",body_obj);
+    emit s_select_emu_data(120000,"/r_emu_action",body_obj);
 }
 
 void select_emu_action_widget::onm_display_emu_data(QJsonObject data)

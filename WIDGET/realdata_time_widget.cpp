@@ -220,7 +220,7 @@ void realdata_time_widget::onm_update_power_data(QMap<QString, station *> t_stat
 void realdata_time_widget::on_select_bt_clicked()
 {
     QJsonObject body;
-    emit s_select_power_data(60000,"/r_mi_current_power",body);
+    emit s_select_power_data(120000,"/r_mi_current_power",body);
 }
 
 

@@ -53,7 +53,7 @@ void select_room_temp_widget::on_select_pb_clicked()
     body_obj.insert("start_num",QString::number(ui->flipover_wd->get_page_index()));
 
 
-    emit s_select_room_temp_data(5000,"/r_ag_room_temp",body_obj);
+    emit s_select_room_temp_data(120000,"/r_ag_room_temp",body_obj);
 
 }
 

@@ -105,7 +105,7 @@ void history_batch_set_dialog::on_select_pb_clicked()
     param.insert("start_time",start_date);
     param.insert("stop_time",stop_date);
 
-    emit s_get_batch_list(60000,"/batch_list",param);
+    emit s_get_batch_list(180000,"/batch_list",param);
 
 }
 

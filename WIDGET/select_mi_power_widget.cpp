@@ -89,11 +89,11 @@ void select_mi_power_widget::on_select_pb_clicked()
     //用不同的url  区分回来时数据的显示界面  因为mi_detail_widget  和 当前界面都用的这个控件
     if(ui->mi_edt->isEnabled())
     {
-        emit s_select_mi_power_data(5000,"/r_mi_power",body_obj);
+        emit s_select_mi_power_data(120000,"/r_mi_power",body_obj);
     }
     else
     {
-        emit s_select_mi_power_data(5000,"/r_one_mi_power",body_obj);
+        emit s_select_mi_power_data(120000,"/r_one_mi_power",body_obj);
     }
 }
 

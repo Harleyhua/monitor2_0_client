@@ -21,8 +21,10 @@ aging_mi_widget::aging_mi_widget(QWidget *parent) :
     ui->setupUi(this);
 
     QStringList field;
+
+    //1
     field <<  "微逆真实编号" << "默认网关编号"<< "老化位置" << "标称功率" << "最高功率(W)" << "最低功率(W)" << "最高温度(℃)" << "累计原边故障1" <<
-             "累计原边故障2" << "累计副边故障"<< "数据点数" << "老化结果" <<"老化开始时间" << "老化结束时间";
+             "累计原边故障2" << "累计副边故障"<< "数据点数" << "老化结果" <<"老化开始时间" << "老化结束时间" << "原边版本号" << "副边版本号";
 
     ui->tableWidget->setColumnCount(field.size());
     ui->tableWidget->setHorizontalHeaderLabels(field);
@@ -38,17 +40,7 @@ aging_mi_widget::aging_mi_widget(QWidget *parent) :
     ui->tableWidget->setSelectionBehavior(QTableWidget::SelectRows);
 
     ui->tableWidget->setItemDelegate(new NewlineDelegate());
-//    for(int i=0;i<13;i++)
-//    {
-//        ui->tableWidget->setItemDelegateForColumn(i, new NewlineDelegate());
-//    }
 
-
-    //宽度根据内容自适应
-    //ui->tableWidget->resizeColumnsToContents();
-    //实现换行和高度自适应
-    //ui->tableWidget->resizeRowsToContents();
-    //ui->tableWidget->setWordWrap(true);
     //初始化按 批次查询
     ui->select_way_cb->setCurrentIndex(2);
 
@@ -154,11 +146,6 @@ void aging_mi_widget::onm_get_batch_mis(QString start_time, QStringList mis)
 
 void aging_mi_widget::onm_read_cloud_workorder(QString workorder_id)
 {
-//    {
-//        "params":{
-//            "workorder_id":"001"
-//         }
-//    }
     QJsonObject obj;
 
     obj.insert("workorder_id",workorder_id);
@@ -199,7 +186,7 @@ void aging_mi_widget::onm_write_cloud_workorder_success()
 
 void aging_mi_widget::onm_read_aging_data_success(QJsonObject data)
 {
-    QVector<int> tmp_text_max(14);
+    QVector<int> tmp_text_max(16); //2
 
     QFontMetrics fontMetrics(ui->tableWidget->font());
     tmp_text_max[0] = fontMetrics.horizontalAdvance(ui->tableWidget->horizontalHeaderItem(0)->text());
@@ -217,6 +204,10 @@ void aging_mi_widget::onm_read_aging_data_success(QJsonObject data)
     tmp_text_max[12] = fontMetrics.horizontalAdvance(ui->tableWidget->horizontalHeaderItem(12)->text());
     tmp_text_max[13] = fontMetrics.horizontalAdvance(ui->tableWidget->horizontalHeaderItem(13)->text());
 
+    //3
+    tmp_text_max[14] = fontMetrics.horizontalAdvance(ui->tableWidget->horizontalHeaderItem(14)->text());
+    tmp_text_max[15] = fontMetrics.horizontalAdvance(ui->tableWidget->horizontalHeaderItem(15)->text());
+
     //保存老化报告
     m_report = data;
 
@@ -233,8 +224,11 @@ void aging_mi_widget::onm_read_aging_data_success(QJsonObject data)
         if(mi_report_obj.value("all_pv").toString() == "1" && pv_datas_arr.size() == 1)
         {
             QTableWidgetItem *ret_item = new QTableWidgetItem();
+            //微逆编号
             ui->tableWidget->setItem(i,0,new QTableWidgetItem(mi_report_obj.value("mi_cid").toString()));
+            //默认网关编号
             ui->tableWidget->setItem(i,1,new QTableWidgetItem(m_mis.value(mi_report_obj.value("mi_cid").toString(),"")));
+            //老化位置
             ui->tableWidget->setItem(i,2,new QTableWidgetItem(mi_report_obj.value("pos_desc").toString()));
 
 
@@ -282,18 +276,14 @@ void aging_mi_widget::onm_read_aging_data_success(QJsonObject data)
             if(mi_report_obj.value("b_ret").toInt() == 2)
             {
                 ret_item->setData(Qt::UserRole, 2);
-
-                //ui->tableWidget->item(i,10)->setBackground(QBrush(QColor(255,79,82)));
             }
             else if(mi_report_obj.value("b_ret").toInt() == 1)
             {
                 ret_item->setData(Qt::UserRole,1);
-                //ui->tableWidget->item(i,10)->setBackground(QBrush(QColor(240,255,108)));
             }
             else if(mi_report_obj.value("b_ret").toInt() == 0)
             {
                 ret_item->setData(Qt::UserRole,3);
-                //ui->tableWidget->item(i,10)->setBackground(QBrush(QColor(138,255,165)));
             }
             ret_item->setText(pv_datas_arr[0].toObject().value("pv_ret").toString());
 
@@ -301,6 +291,10 @@ void aging_mi_widget::onm_read_aging_data_success(QJsonObject data)
             ui->tableWidget->setItem(i,11,ret_item);
             ui->tableWidget->setItem(i,12,new QTableWidgetItem(mi_report_obj.value("start_time").toString()));
             ui->tableWidget->setItem(i,13,new QTableWidgetItem(mi_report_obj.value("stop_time").toString()));
+
+            //版本号
+            ui->tableWidget->setItem(i,14,new QTableWidgetItem(mi_report_obj.value("mim_version").toString()));
+            ui->tableWidget->setItem(i,15,new QTableWidgetItem(mi_report_obj.value("mis_version").toString()));
 
             //测量宽度
             for(int j=0;j<14;j++)
@@ -420,27 +414,29 @@ void aging_mi_widget::onm_read_aging_data_success(QJsonObject data)
             ui->tableWidget->setItem(i,9,new QTableWidgetItem(QString("%1").arg(pv_datas_arr[0].toObject().value("mis_err").toInt(),4,16,QLatin1Char('0')).toUpper()));
             ui->tableWidget->setItem(i,10,new QTableWidgetItem(QString::number(mi_report_obj.value("aging_points").toInt())));
 
+
+
             if(mi_report_obj.value("b_ret").toInt() == 2)
             {
                 ret_item->setData(Qt::UserRole, 2);
-
-                //ui->tableWidget->item(i,10)->setBackground(QBrush(QColor(255,79,82)));
             }
             else if(mi_report_obj.value("b_ret").toInt() == 1)
             {
                 ret_item->setData(Qt::UserRole,1);
-                //ui->tableWidget->item(i,10)->setBackground(QBrush(QColor(240,255,108)));
             }
             else if(mi_report_obj.value("b_ret").toInt() == 0)
             {
                 ret_item->setData(Qt::UserRole,3);
-                //ui->tableWidget->item(i,10)->setBackground(QBrush(QColor(138,255,165)));
             }
             ret_item->setText(ret);
 
             ui->tableWidget->setItem(i,11,ret_item);
             ui->tableWidget->setItem(i,12,new QTableWidgetItem(mi_report_obj.value("start_time").toString()));
             ui->tableWidget->setItem(i,13,new QTableWidgetItem(mi_report_obj.value("stop_time").toString()));
+
+            //版本号
+            ui->tableWidget->setItem(i,14,new QTableWidgetItem(mi_report_obj.value("mim_version").toString()));
+            ui->tableWidget->setItem(i,15,new QTableWidgetItem(mi_report_obj.value("mis_version").toString()));
 
             //测量宽度
             for(int j=0;j<14;j++)
@@ -464,8 +460,6 @@ void aging_mi_widget::onm_read_aging_data_success(QJsonObject data)
     {
         ui->tableWidget->setColumnWidth(i,tmp_text_max[i]+30);
     }
-
-//    ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget->resizeRowsToContents();
 }
 
@@ -524,7 +518,7 @@ void aging_mi_widget::set_select_way(int id)
 
 void aging_mi_widget::export_aging_report(QString file_path)
 {
-#define EXCEL_FIELD_SIZE  12
+#define EXCEL_FIELD_SIZE  16
     QJsonArray report_datas_arr = m_report.value("report_datas").toArray();
     QXlsx::Document xlsx;
     QXlsx::Worksheet *sheet1 = xlsx.currentWorksheet();
@@ -559,42 +553,55 @@ void aging_mi_widget::export_aging_report(QString file_path)
         }
     }
     sheet1->write(2,1,"微逆老化记录");
+
     /* 定义各个字段名 */
     sheet1->write(3,1,"微逆编号",format);
     sheet1->setColumnWidth(1,1,12);
 
-    sheet1->write(3,2,"额定功率",format);
+    sheet1->write(3,2,"默认网关编号",format);
     sheet1->setColumnWidth(2,2,12);
 
-    sheet1->write(3,3,"最大功率",format);
+    sheet1->write(3,3,"老化位置",format);
     sheet1->setColumnWidth(3,3,12);
 
-    sheet1->write(3,4,"最小功率",format);
+    sheet1->write(3,4,"标称功率",format);
     sheet1->setColumnWidth(4,4,12);
 
-    sheet1->write(3,5,"最高温度",format);
+    sheet1->write(3,5,"最高功率",format);
     sheet1->setColumnWidth(5,5,12);
 
-    sheet1->write(3,6,"累计原边故障1",format);
+    sheet1->write(3,6,"最低功率",format);
     sheet1->setColumnWidth(6,6,21);
 
-    sheet1->write(3,7,"累计原边故障2",format);
+    sheet1->write(3,7,"最高温度",format);
     sheet1->setColumnWidth(7,7,21);
 
-    sheet1->write(3,8,"累计副边故障",format);
+    sheet1->write(3,8,"累计原边故障1",format);
     sheet1->setColumnWidth(8,8,21);
 
-    sheet1->write(3,9,"采集数据点数",format);
+    sheet1->write(3,9,"累计原边故障2",format);
     sheet1->setColumnWidth(9,9,18);
 
-    sheet1->write(3,10,"老化开始批次",format);
+    sheet1->write(3,10,"累计副边故障",format);
     sheet1->setColumnWidth(10,10,18);
 
-    sheet1->write(3,11,"老化结果",format);
+    sheet1->write(3,11,"数据点数",format);
     sheet1->setColumnWidth(11,11,21);
 
-    sheet1->write(3,12,"备注说明",format);
+    sheet1->write(3,12,"老化结果",format);
     sheet1->setColumnWidth(12,12,21);
+
+    sheet1->write(3,13,"老化开始时间",format);
+    sheet1->setColumnWidth(13,13,21);
+
+    sheet1->write(3,14,"原边版本号",format);
+    sheet1->setColumnWidth(14,14,21);
+
+    sheet1->write(3,15,"副边版本号",format);
+    sheet1->setColumnWidth(15,15,21);
+
+    sheet1->write(3,16,"备注说明",format);
+    sheet1->setColumnWidth(16,16,21);
 
 
     /* 老化记录 微逆具体数据*/
@@ -619,31 +626,65 @@ void aging_mi_widget::export_aging_report(QString file_path)
                 sheet1->write(cur_index,1,m_mis[mi_report.value("mi_cid").toString()],format);
             }
 
+            //默认网关编号
+            // 检查m_mis中是否存在与mi_cid对应的网关编号
+            QString gatewayId = m_mis.value(mi_report.value("mi_cid").toString(), " ");
+            if (!gatewayId.isEmpty()) {
+                // 如果在m_mis中找到了与mi_cid对应的值，则使用该值
+                sheet1->write(cur_index, 2, gatewayId, format);
+            } else {
+                // 如果在m_mis中未找到与mi_cid对应的值，则使用空字符串" "
+                sheet1->write(cur_index, 2, "", format);
+            }
 
+            //老化位置
+            if(m_mis.value(mi_report.value("pos_desc").toString(),"") == "")
+            {
+                sheet1->write(cur_index,3,mi_report.value("pos_desc").toString(),format);
+            }
+            else
+            {
+                sheet1->write(cur_index,3,m_mis[mi_report.value("pos_desc").toString()],format);
+            }
+
+            //标称功率
             if(mi_report.value("total_nominal_power").toInt() != 1000000)
             {
-                sheet1->write(cur_index,2,mi_report.value("total_nominal_power").toInt(),format);
+                sheet1->write(cur_index,4,mi_report.value("total_nominal_power").toInt(),format);
             }
 
-
+            //最大功率
             if(pv0_report.value("pw_max").toInt() != DEFAULT_VALUE_MAX)
             {
-                sheet1->write(cur_index,3,(float)pv0_report.value("pw_max").toInt()/100,float_format);
+                sheet1->write(cur_index,5,(float)pv0_report.value("pw_max").toInt()/100,float_format);
             }
+            //最小功率
             if(pv0_report.value("pw_min").toInt() != DEFAULT_VALUE_MIN)
             {
-                sheet1->write(cur_index,4,(float)pv0_report.value("pw_min").toInt()/100,float_format);
+                sheet1->write(cur_index,6,(float)pv0_report.value("pw_min").toInt()/100,float_format);
             }
+            //最高温度
             if(pv0_report.value("tmax").toInt() != DEFAULT_VALUE_MAX)
             {
-                sheet1->write(cur_index,5,(float)pv0_report.value("tmax").toInt()/100,float_format);
+                sheet1->write(cur_index,7,(float)pv0_report.value("tmax").toInt()/100,float_format);
             }
 
-            sheet1->write(cur_index,6,QString("%1").arg(pv0_report.value("mim_err").toInt(),4,16,QLatin1Char('0')).toUpper(),format);
-            sheet1->write(cur_index,7,"",format);
-            sheet1->write(cur_index,8,QString("%1").arg(pv0_report.value("mis_err").toInt(),4,16,QLatin1Char('0')).toUpper(),format);
-            sheet1->write(cur_index,9,mi_report.value("aging_points").toInt(0),format);
-            sheet1->write(cur_index,10,mi_report.value("start_time").toString(),format);
+            //累计原边故障1
+            sheet1->write(cur_index,8,QString("%1").arg(pv0_report.value("mim_err").toInt(),4,16,QLatin1Char('0')).toUpper(),format);
+            //累计原边故障2
+            sheet1->write(cur_index,9,"",format);
+            //累计副边故障
+            sheet1->write(cur_index,10,QString("%1").arg(pv0_report.value("mis_err").toInt(),4,16,QLatin1Char('0')).toUpper(),format);
+            //采集数据点数
+            sheet1->write(cur_index,11,mi_report.value("aging_points").toInt(0),format);
+            //老化开始时间
+            sheet1->write(cur_index,12,mi_report.value("start_time").toString(),format);
+            //老化结束时间
+            sheet1->write(cur_index,13,mi_report.value("stop_time").toString(),format);
+            //原边版本号
+            sheet1->write(cur_index,14,mi_report.value("mim_version").toString(),format);
+            //副边版本号
+            sheet1->write(cur_index,15,mi_report.value("mis_version").toString(),format);
 
             //调整结果背景色格式
             if(mi_report.value("b_ret").toInt() == 0)
@@ -695,15 +736,20 @@ void aging_mi_widget::export_aging_report(QString file_path)
             ret_str.addFragment("整机:"  + total_data.value("total_ret").toString(),format);
             for(int j=0;j<pv_data_size;j++)
             {
+                //获取光伏数据对象
                 QJsonObject one_pv_data = pv_data_array[j].toObject();
+
+                //如果有最大功率数据
                 if(one_pv_data.value("pw_max").toInt() != DEFAULT_VALUE_MAX)
                 {
                     max_pw_str.addFragment("\nPV" + QString::number(j+1) + ":" + QString::number(((double)one_pv_data.value("pw_max").toInt())/100,'f',2),format);
                 }
+                //最小功率
                 if(one_pv_data.value("pw_min").toInt() != DEFAULT_VALUE_MIN)
                 {
                     min_pw_str.addFragment("\nPV" + QString::number(j+1) + ":" + QString::number(((double)one_pv_data.value("pw_min").toInt())/100,'f',2),format);
                 }
+                //最高温度
                 if(one_pv_data.value("tmax").toInt() != DEFAULT_VALUE_MAX)
                 {
                     max_temp_str.addFragment("\nPV" + QString::number(j+1) + ":" + QString::number(((double)one_pv_data.value("tmax").toInt())/100,'f',2),format);
@@ -711,6 +757,7 @@ void aging_mi_widget::export_aging_report(QString file_path)
 
                 ret_str.addFragment("\nPV"  + QString::number(j+1) + ":" + one_pv_data.value("pv_ret").toString(),format);
 
+                //根据光伏数据数量设置累计原边故障和累计副边故障
                 if(j== 0)
                 {
                     mim_err1 = QString("%1").arg(one_pv_data.value("mim_err").toInt(),4,16,QLatin1Char('0')).toUpper();
@@ -722,7 +769,7 @@ void aging_mi_widget::export_aging_report(QString file_path)
                 }
             }
 
-
+            //如果报告中有微逆编号，则从报告中获取并写入，否则直接写入
             if(m_mis.value(mi_report.value("mi_cid").toString(),"") == "")
             {
                 sheet1->write(cur_index,1,mi_report.value("mi_cid").toString(),format);
@@ -731,25 +778,60 @@ void aging_mi_widget::export_aging_report(QString file_path)
             {
                 sheet1->write(cur_index,1,m_mis[mi_report.value("mi_cid").toString()],format);
             }
+            //默认网关编号
+            // 检查m_mis中是否存在与mi_cid对应的网关编号
+            QString gatewayId = m_mis.value(mi_report.value("mi_cid").toString(), " ");
+            if (!gatewayId.isEmpty()) {
+                // 如果在m_mis中找到了与mi_cid对应的值，则使用该值
+                sheet1->write(cur_index, 2, gatewayId, format);
+            } else {
+                // 如果在m_mis中未找到与mi_cid对应的值，则使用空字符串" "
+                sheet1->write(cur_index, 2, "", format);
+            }
 
+            //老化位置
+            if(m_mis.value(mi_report.value("pos_desc").toString(),"") == "")
+            {
+                sheet1->write(cur_index,3,mi_report.value("pos_desc").toString(),format);
+            }
+            else
+            {
+                sheet1->write(cur_index,3,m_mis[mi_report.value("pos_desc").toString()],format);
+            }
 
+            //根据光伏数据数量写入额定功率
             if(pv_data_size == 2 && mi_report.value("total_nominal_power").toInt() != 2000000)
             {
-               sheet1->write(cur_index,2,mi_report.value("total_nominal_power").toInt(),format);
+                sheet1->write(cur_index,4,mi_report.value("total_nominal_power").toInt(),format);
             }
             else if(pv_data_size == 4 && mi_report.value("total_nominal_power").toInt() != 4000000)
             {
-                sheet1->write(cur_index,2,mi_report.value("total_nominal_power").toInt(),format);
+                sheet1->write(cur_index,4,mi_report.value("total_nominal_power").toInt(),format);
             }
 
-            sheet1->write(cur_index,3,max_pw_str,format);
-            sheet1->write(cur_index,4,min_pw_str,format);
-            sheet1->write(cur_index,5,max_temp_str,format);
-            sheet1->write(cur_index,6,mim_err1,format);
-            sheet1->write(cur_index,7,mim_err2,format);
-            sheet1->write(cur_index,8,mis_err,format);
-            sheet1->write(cur_index,9,mi_report.value("aging_points").toInt(0),format);
-            sheet1->write(cur_index,10,mi_report.value("start_time").toString(),format);
+            //最大功率
+            sheet1->write(cur_index,5,max_pw_str,format);
+            //最低温度
+            sheet1->write(cur_index,6,min_pw_str,format);
+            //最高温度
+            sheet1->write(cur_index,7,max_temp_str,format);
+            //原边故障1
+            sheet1->write(cur_index,8,mim_err1,format);
+            //原边故障2
+            sheet1->write(cur_index,9,mim_err2,format);
+            //副边故障
+            sheet1->write(cur_index,10,mis_err,format);
+            //采集数据点数
+            sheet1->write(cur_index,11,mi_report.value("aging_points").toInt(0),format);
+            //老化开始批次
+            sheet1->write(cur_index,12,mi_report.value("start_time").toString(),format);
+            //老化结束时间
+            sheet1->write(cur_index,13,mi_report.value("stop_time").toString(),format);
+            //原边版本号
+            sheet1->write(cur_index,14,mi_report.value("mim_version").toString(),format);
+            //副边版本号
+            sheet1->write(cur_index,15,mi_report.value("mis_version").toString(),format);
+
 
             //调整结果背景色格式
             if(mi_report.value("b_ret").toInt() == 0)
@@ -835,7 +917,7 @@ void aging_mi_widget::on_select_pb_clicked()
         sel_param_obj.insert("mis",mis);
         QJsonObject data;
         data.insert("select_param",sel_param_obj);
-        emit s_read_aging_data(20000,"/aging_report",data);
+        emit s_read_aging_data(120000,"/aging_report",data);
 
 
     }//按工单
@@ -854,7 +936,7 @@ void aging_mi_widget::on_select_pb_clicked()
 
         QJsonObject data;
         data.insert("select_param",sel_param_obj);
-        emit s_read_aging_data(60000,"/aging_report",data);
+        emit s_read_aging_data(120000,"/aging_report",data);
     }
     else if(ui->select_way_cb->currentIndex() == 2)
     {
@@ -871,7 +953,7 @@ void aging_mi_widget::on_select_pb_clicked()
         sel_param_obj.insert("start_time",m_start_time);
         QJsonObject data;
         data.insert("select_param",sel_param_obj);
-        emit s_read_aging_data(60000,"/aging_report",data);
+        emit s_read_aging_data(120000,"/aging_report",data);
     }
 }
 

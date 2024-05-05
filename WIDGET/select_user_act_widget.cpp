@@ -76,7 +76,7 @@ void select_user_act_widget::on_select_pb_clicked()
     param.insert("nums",QString::number(ui->flipover_wd->get_one_page_num()));
     param.insert("start_num",QString::number(ui->flipover_wd->get_page_index()));
 
-    emit s_select_user_act(5000,"/r_user_act",param);
+    emit s_select_user_act(120000,"/r_user_act",param);
 }
 
 
